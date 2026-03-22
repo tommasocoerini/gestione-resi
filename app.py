@@ -1,8 +1,11 @@
 import streamlit as st
 import pandas as pd
+import io
 
+# 1. CONFIGURAZIONE PAGINA
 st.set_page_config(page_title="TEP - Tire Exchange Program", layout="wide", page_icon="🛞")
 
+# 2. CSS PERSONALIZZATO (Stile Claude + Fix Tabelle)
 st.markdown("""
     <style>
     .main { background-color: #0B1D45 !important; }
@@ -29,20 +32,27 @@ st.markdown("""
     }
     div[data-baseweb="select"] div { color: #FBBD00 !important; }
 
-    /* DOWNLOAD */
+    /* DOWNLOAD BUTTON */
     .stDownloadButton button {
         background-color: #FBBD00 !important;
         color: #0B1D45 !important;
         border: 2px solid #0B1D45 !important;
         font-weight: bold; width: 100%;
+        padding: 12px;
+        border-radius: 8px;
+    }
+    .stDownloadButton button:hover {
+        background-color: #FFFFFF !important;
+        border-color: #0B1D45 !important;
     }
 
-    /* TABELLA */
+    /* TABELLA HTML TEP */
     .tep-table {
         width: 100%; border-collapse: separate; border-spacing: 0;
         border-radius: 12px; overflow: hidden;
         font-family: 'Segoe UI', sans-serif; font-size: 0.95rem;
         box-shadow: 0 4px 24px rgba(0,0,0,0.4);
+        margin-bottom: 25px;
     }
     .tep-table thead tr { background-color: #FBBD00; }
     .tep-table thead th {
@@ -57,7 +67,7 @@ st.markdown("""
         text-align: center; width: 22.5%;
     }
     .tep-table tbody tr:nth-child(odd)  { background-color: #112259; }
-    .tep-table tbody tr:nth-child(even) { background-color: #0D1D48; }
+    .tep-table tbody tr:even { background-color: #0D1D48; }
     .tep-table tbody tr:hover { background-color: #1a3070; transition: background-color 0.2s ease; }
     .tep-table tbody td {
         color: #E8EDF8 !important; padding: 11px 16px;
@@ -72,6 +82,14 @@ st.markdown("""
     </style>
 """, unsafe_allow_html=True)
 
+# 3. FUNZIONE PER EXCEL
+def to_excel(df):
+    output = io.BytesIO()
+    with pd.ExcelWriter(output, engine='xlsxwriter') as writer:
+        df.to_excel(writer, index=False, sheet_name='Reso_TEP')
+    return output.getvalue()
+
+# 4. DATI DI TEST
 @st.cache_data
 def load_data():
     data = {
@@ -86,6 +104,7 @@ def load_data():
 
 df = load_data()
 
+# --- SIDEBAR ---
 with st.sidebar:
     st.markdown('<div class="sidebar-label"><span style="font-size:1.4rem;">👤</span><span class="sidebar-label-text">Seleziona Sales Representative</span></div>', unsafe_allow_html=True)
     sales_reps = sorted(df['Sales Representative'].unique())
@@ -99,6 +118,7 @@ with st.sidebar:
     cliente_nome = st.selectbox("Seleziona Cliente", nomi_lista, label_visibility="collapsed")
     cliente_codice = df_rep[df_rep['Nome Cliente'] == cliente_nome]['Codice Cliente'].iloc[0]
 
+# --- CONTENUTO PRINCIPALE ---
 st.title("🛞 TEP: Tire Exchange Program")
 st.subheader(f"Riepilogo pneumatici restituibili: {cliente_nome}")
 st.write(f"**Codice:** {cliente_codice} | **Sales Rep:** {sales_rep}")
@@ -108,6 +128,7 @@ df_display = df_rep[df_rep['Codice Cliente'] == cliente_codice].copy()
 if not df_display.empty:
     df_view = df_display[['Size & Type', 'Quantità Iniziale', 'Quantità restituibile']].copy()
 
+    # COSTRUZIONE TABELLA HTML
     rows = []
     for _, row in df_view.iterrows():
         qty_rest = row['Quantità restituibile']
@@ -121,6 +142,14 @@ if not df_display.empty:
         f'</tr></thead><tbody>{rows_html}</tbody></table>'
     )
     st.markdown(table_html, unsafe_allow_html=True)
+    
     st.markdown("---")
-    csv = df_view.to_csv(index=False).encode('utf-8')
-    st.download_button(label="📥 SCARICA MODULO RESO TEP", data=csv, file_name=f"TEP_{cliente_codice}.csv")
+    
+    # GENERAZIONE EXCEL E DOWNLOAD
+    excel_data = to_excel(df_view)
+    st.download_button(
+        label="📥 SCARICA MODULO DI RESO",
+        data=excel_data,
+        file_name=f"Modulo_Reso_{cliente_codice}.xlsx",
+        mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+    )
