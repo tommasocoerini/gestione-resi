@@ -17,18 +17,29 @@ st.markdown("""
         font-weight: bold !important;
     }
 
-    /* --- TOGGLE: blu scuro su sfondo giallo --- */
-    div[data-testid="stToggle"] div[data-baseweb="checkbox"] div[role="switch"] {
+    /* BOTTONI NOME / CODICE - stato base (non attivo) */
+    div[data-testid="stSidebar"] .stButton button {
         background-color: #0B1D45 !important;
+        color: #FBBD00 !important;
         border: 2px solid #0B1D45 !important;
-    }
-    div[data-testid="stToggle"] div[data-baseweb="checkbox"] div[role="switch"] div {
-        background-color: #FBBD00 !important;
-    }
-    div[data-testid="stToggle"] label {
-        color: #0B1D45 !important;
         font-weight: 900 !important;
-        font-size: 0.95rem !important;
+        font-size: 0.85rem !important;
+        letter-spacing: 0.08em !important;
+        border-radius: 20px !important;
+        padding: 4px 18px !important;
+        width: 100% !important;
+        transition: all 0.15s ease !important;
+    }
+    div[data-testid="stSidebar"] .stButton button:hover {
+        background-color: #1a3070 !important;
+        color: #FBBD00 !important;
+    }
+
+    /* BOTTONE ATTIVO: bianco con testo blu */
+    div[data-testid="stSidebar"] .stButton button[kind="primary"] {
+        background-color: white !important;
+        color: #0B1D45 !important;
+        border: 2px solid #0B1D45 !important;
     }
 
     /* DROPDOWN MENU */
@@ -44,37 +55,6 @@ st.markdown("""
         color: #0B1D45 !important;
         border: 2px solid #0B1D45 !important;
         font-weight: bold; width: 100%;
-    }
-
-    /* --- BADGE NOME / CODICE sopra il toggle --- */
-    .toggle-label {
-        display: flex;
-        align-items: center;
-        gap: 8px;
-        margin-bottom: 6px;
-    }
-    .badge-nome {
-        background-color: #0B1D45;
-        color: #FBBD00;
-        font-weight: 900;
-        font-size: 0.78rem;
-        padding: 3px 10px;
-        border-radius: 20px;
-        letter-spacing: 0.05em;
-    }
-    .badge-codice {
-        background-color: #0B1D45;
-        color: #FBBD00;
-        font-weight: 900;
-        font-size: 0.78rem;
-        padding: 3px 10px;
-        border-radius: 20px;
-        letter-spacing: 0.05em;
-    }
-    .badge-arrow {
-        color: #0B1D45;
-        font-weight: 900;
-        font-size: 1rem;
     }
 
     /* --- TABELLA CUSTOM --- */
@@ -152,6 +132,10 @@ def load_data():
 
 df = load_data()
 
+# Session state per la modalità di ricerca (default: per Nome)
+if 'usa_codice' not in st.session_state:
+    st.session_state.usa_codice = False
+
 # --- SIDEBAR ---
 with st.sidebar:
     st.subheader("👤 Sales Representative")
@@ -161,20 +145,20 @@ with st.sidebar:
     st.markdown("---")
     st.subheader("🔍 Ricerca Cliente")
 
-    # Badge NOME ↔ CODICE sopra il toggle per chiarezza visiva
-    st.markdown(
-        '<div class="toggle-label">'
-        '<span class="badge-nome">NOME</span>'
-        '<span class="badge-arrow">↔</span>'
-        '<span class="badge-codice">CODICE</span>'
-        '</div>',
-        unsafe_allow_html=True
-    )
-    usa_codice = st.toggle("Cerca per Codice Cliente")
+    # Due bottoni affiancati: NOME e CODICE
+    col1, col2 = st.columns(2)
+    with col1:
+        if st.button("NOME", type="primary" if not st.session_state.usa_codice else "secondary"):
+            st.session_state.usa_codice = False
+            st.rerun()
+    with col2:
+        if st.button("CODICE", type="primary" if st.session_state.usa_codice else "secondary"):
+            st.session_state.usa_codice = True
+            st.rerun()
 
     df_rep = df[df['Sales Representative'] == sales_rep]
 
-    if usa_codice:
+    if st.session_state.usa_codice:
         codici_lista = sorted(df_rep['Codice Cliente'].unique())
         cliente_codice = st.selectbox("Seleziona Codice Cliente", codici_lista)
         cliente_nome = df_rep[df_rep['Codice Cliente'] == cliente_codice]['Nome Cliente'].iloc[0]
