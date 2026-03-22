@@ -15,27 +15,6 @@ st.markdown("""
         font-weight: bold !important;
     }
 
-    /* TUTTI i bottoni nella sidebar: stile pill inattivo (giallo/bordo blu) */
-    [data-testid="stSidebar"] .stButton button {
-        background-color: #FBBD00 !important;
-        color: #0B1D45 !important;
-        border: 2.5px solid #0B1D45 !important;
-        font-weight: 900 !important;
-        font-size: 0.85rem !important;
-        letter-spacing: 0.08em !important;
-        border-radius: 999px !important;
-        padding: 7px 0 !important;
-        width: 100% !important;
-        cursor: pointer !important;
-        transition: all 0.15s ease !important;
-    }
-    /* Bottone ATTIVO: blu + testo giallo */
-    [data-testid="stSidebar"] .stButton button[kind="primary"] {
-        background-color: #0B1D45 !important;
-        color: #FBBD00 !important;
-        border: 2.5px solid #0B1D45 !important;
-    }
-
     /* Etichette sidebar */
     .sidebar-label {
         display: flex; align-items: center;
@@ -107,9 +86,6 @@ def load_data():
 
 df = load_data()
 
-if 'usa_codice' not in st.session_state:
-    st.session_state.usa_codice = False
-
 with st.sidebar:
     st.markdown('<div class="sidebar-label"><span style="font-size:1.4rem;">👤</span><span class="sidebar-label-text">Seleziona Sales Representative</span></div>', unsafe_allow_html=True)
     sales_reps = sorted(df['Sales Representative'].unique())
@@ -118,30 +94,10 @@ with st.sidebar:
     st.markdown("---")
 
     st.markdown('<div class="sidebar-label"><span style="font-size:1.4rem;">🔍</span><span class="sidebar-label-text">Seleziona Cliente</span></div>', unsafe_allow_html=True)
-
-    col1, col2 = st.columns(2)
-    with col1:
-        # NOME attivo = primary (blu), inattivo = secondary (giallo)
-        if st.button("NOME", key="btn_nome",
-                     type="primary" if not st.session_state.usa_codice else "secondary"):
-            st.session_state.usa_codice = False
-            st.rerun()
-    with col2:
-        if st.button("CODICE", key="btn_codice",
-                     type="primary" if st.session_state.usa_codice else "secondary"):
-            st.session_state.usa_codice = True
-            st.rerun()
-
     df_rep = df[df['Sales Representative'] == sales_rep]
-
-    if st.session_state.usa_codice:
-        codici_lista = sorted(df_rep['Codice Cliente'].unique())
-        cliente_codice = st.selectbox("Seleziona Codice Cliente", codici_lista)
-        cliente_nome = df_rep[df_rep['Codice Cliente'] == cliente_codice]['Nome Cliente'].iloc[0]
-    else:
-        nomi_lista = sorted(df_rep['Nome Cliente'].unique())
-        cliente_nome = st.selectbox("Seleziona Ragione Sociale", nomi_lista)
-        cliente_codice = df_rep[df_rep['Nome Cliente'] == cliente_nome]['Codice Cliente'].iloc[0]
+    nomi_lista = sorted(df_rep['Nome Cliente'].unique())
+    cliente_nome = st.selectbox("Seleziona Cliente", nomi_lista, label_visibility="collapsed")
+    cliente_codice = df_rep[df_rep['Nome Cliente'] == cliente_nome]['Codice Cliente'].iloc[0]
 
 st.title("🛞 TEP: Tire Exchange Program")
 st.subheader(f"Riepilogo pneumatici restituibili: {cliente_nome}")
