@@ -7,6 +7,9 @@ st.set_page_config(page_title="TEP - Program 2026", layout="wide", page_icon="�
 LOGO_MAIN    = "https://github.com/tommasocoerini/tep/blob/main/logo.png?raw=true"
 LOGO_SIDEBAR = "https://github.com/tommasocoerini/tep/blob/main/logo2.png?raw=true"
 
+# st.logo() mette l'immagine nell'area header della sidebar (sopra tutto)
+st.logo(LOGO_SIDEBAR, link=None)
+
 st.markdown("""
     <style>
     .main { background-color: #0B1D45 !important; }
@@ -14,8 +17,33 @@ st.markdown("""
     /* SIDEBAR */
     [data-testid="stSidebar"] { background-color: #FBBD00 !important; }
 
-    /* Rimuove padding superiore della sidebar per avvicinare il logo al bordo */
-    [data-testid="stSidebarUserContent"] { padding-top: 1rem !important; }
+    /* Nasconde l'header nativo di Streamlit nella sidebar (hamburger menu area) */
+    [data-testid="stSidebarHeader"] {
+        background-color: #FBBD00 !important;
+        padding: 0.5rem 1rem !important;
+    }
+
+    /* Forza dimensione logo grande — attacca ogni possibile elemento figlio */
+    [data-testid="stLogo"],
+    [data-testid="stLogo"] > *,
+    [data-testid="stLogo"] a,
+    [data-testid="stLogo"] a > * {
+        height: auto !important;
+        max-height: none !important;
+        width: 100% !important;
+        max-width: none !important;
+    }
+    [data-testid="stLogo"] img,
+    [data-testid="stLogo"] picture,
+    [data-testid="stLogo"] picture img,
+    [data-testid="stLogo"] svg {
+        height: auto !important;
+        max-height: none !important;
+        width: 100% !important;
+        max-width: none !important;
+        object-fit: contain !important;
+        display: block !important;
+    }
 
     .sidebar-section-title {
         color: #0B1D45 !important;
@@ -110,10 +138,6 @@ def to_excel(df, codice, ragione_sociale):
 df_all = load_data()
 
 with st.sidebar:
-    # Logo a piena larghezza — use_container_width garantisce che sia largo come il contenuto della sidebar
-    st.image(LOGO_SIDEBAR, use_container_width=True)
-    st.markdown("---")
-
     st.markdown('<span class="sidebar-section-title">Seleziona Sales Representative</span>', unsafe_allow_html=True)
     sales_reps = sorted(df_all['Sales Representative'].unique())
     sales_rep = st.selectbox("Seleziona Sales Representative", sales_reps, label_visibility="collapsed")
