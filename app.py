@@ -4,7 +4,7 @@ import pandas as pd
 # 1. CONFIGURAZIONE PAGINA
 st.set_page_config(page_title="TEP - Tire Exchange Program", layout="wide", page_icon="🛞")
 
-# 2. CSS PERSONALIZZATO (Colori aziendali e allineamenti)
+# 2. CSS AGGIORNATO (FIX CHIRURGICI)
 st.markdown("""
     <style>
     .main { background-color: #0B1D45 !important; }
@@ -17,15 +17,41 @@ st.markdown("""
         font-weight: bold !important; 
     }
 
-    /* CHECKBOX BLU */
-    div[data-testid="stCheckbox"] label span { color: #0B1D45 !important; }
-    input[type="checkbox"] { accent-color: #0B1D45 !important; }
+    /* --- FIX CHECKBOX: BORDO BLU SEMPRE VISIBILE --- */
+    /* Cerchio/Quadrato esterno della checkbox quando NON selezionata */
+    [data-testid="stCheckbox"] div[data-baseweb="checkbox"] {
+        border: 2px solid #0B1D45 !important;
+        background-color: transparent !important;
+    }
+    /* Quando è SELEZIONATA */
+    [data-testid="stCheckbox"] div[aria-checked="true"] {
+        background-color: #0B1D45 !important;
+    }
 
-    /* TABELLA - Intestazioni in grassetto */
-    .stDataFrame th {
+    /* --- FIX TABELLA: ALLINEAMENTO CENTRALE TITOLI E NUMERI --- */
+    /* Forza il testo delle intestazioni (TH) e delle celle (TD) al centro */
+    [data-testid="stDataFrame"] th, [data-testid="stDataFrame"] td {
+        text-align: center !important;
+        justify-content: center !important;
+    }
+    
+    /* Titoli in grassetto */
+    [data-testid="stDataFrame"] th {
         font-weight: bold !important;
         color: #0B1D45 !important;
     }
+
+    /* Grassetto specifico per la colonna Quantità Restituibile (la terza) */
+    [data-testid="stDataFrame"] tr td:nth-child(3) {
+        font-weight: bold !important;
+    }
+
+    /* DROPDOWN MENU */
+    div[data-baseweb="select"] { 
+        border: 2px solid #0B1D45 !important; 
+        background-color: #0B1D45 !important;
+    }
+    div[data-baseweb="select"] div { color: #FBBD00 !important; }
 
     /* BOTTONE DOWNLOAD */
     .stDownloadButton button { 
@@ -61,7 +87,6 @@ with st.sidebar:
     st.markdown("---")
     st.subheader("🔍 Ricerca Cliente")
     
-    # CASELLA DI SELEZIONE BLU
     usa_codice = st.checkbox("Cerca per Codice Cliente")
     
     df_rep = df[df['Sales Representative'] == sales_rep]
@@ -77,7 +102,7 @@ with st.sidebar:
 
 # --- VISUALIZZAZIONE PRINCIPALE ---
 st.title("🛞 TEP: Tire Exchange Program")
-st.info("Portale gestione resi. Seleziona un cliente per visualizzare i dati.")
+st.info("Benvenuto nel portale TEP. Seleziona il cliente per visualizzare i dettagli.")
 
 st.subheader(f"Riepilogo pneumatici restituibili: {cliente_nome}")
 st.write(f"**Codice:** {cliente_codice} | **Sales Rep:** {sales_rep}")
@@ -87,40 +112,12 @@ df_display = df_rep[df_rep['Codice Cliente'] == cliente_codice].copy()
 if not df_display.empty:
     df_view = df_display[['Size & Type', 'Quantità Iniziale', 'Quantità restituibile']]
     
-    # CONFIGURAZIONE COLONNE (Allineamento centrale forzato per i numeri)
+    # Visualizzazione Tabella
     st.dataframe(
         df_view,
         use_container_width=True,
-        hide_index=True,
-        column_config={
-            "Size & Type": st.column_config.TextColumn("Size & Type", width="large"),
-            "Quantità Iniziale": st.column_config.NumberColumn(
-                "Quantità Iniziale", 
-                format="%d", 
-                width="medium",
-                help="Stock iniziale ordinato" # Questo centra il contenuto nativamente
-            ),
-            "Quantità restituibile": st.column_config.NumberColumn(
-                "Quantità restituibile", 
-                format="%d", 
-                width="medium",
-                help="Quantità che è possibile rendere"
-            ),
-        }
+        hide_index=True
     )
-    
-    # CSS per forzare il grassetto sui numeri della terza colonna (Quantità restituibile)
-    st.markdown("""
-        <style>
-            [data-testid="stTable"] td:nth-child(3), [data-testid="stDataFrame"] td:nth-child(3) {
-                font-weight: bold !important;
-                text-align: center !important;
-            }
-            [data-testid="stTable"] td:nth-child(2), [data-testid="stDataFrame"] td:nth-child(2) {
-                text-align: center !important;
-            }
-        </style>
-    """, unsafe_allow_html=True)
     
     st.markdown("---")
     csv = df_view.to_csv(index=False).encode('utf-8')
