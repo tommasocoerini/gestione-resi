@@ -31,15 +31,52 @@ st.markdown("""
         font-size: 1rem;
     }
 
+    /* --- RADIO come PILL BUTTONS --- */
+    /* Contenitore orizzontale */
+    div[data-testid="stRadio"] > div {
+        display: flex !important;
+        flex-direction: row !important;
+        gap: 10px !important;
+    }
+    /* Nasconde il pallino radio originale */
+    div[data-testid="stRadio"] input[type="radio"] {
+        display: none !important;
+    }
+    /* Ogni opzione radio diventa una pill */
+    div[data-testid="stRadio"] label {
+        background-color: #FBBD00 !important;
+        color: #0B1D45 !important;
+        border: 2px solid #0B1D45 !important;
+        font-weight: 900 !important;
+        font-size: 0.85rem !important;
+        letter-spacing: 0.08em !important;
+        padding: 7px 22px !important;
+        border-radius: 999px !important;
+        cursor: pointer !important;
+        transition: all 0.15s ease !important;
+        margin: 0 !important;
+    }
+    /* Pill ATTIVA: blu pieno + testo giallo */
+    div[data-testid="stRadio"] label:has(input:checked) {
+        background-color: #0B1D45 !important;
+        color: #FBBD00 !important;
+        border: 2px solid #0B1D45 !important;
+    }
+    /* Hover sulla pill inattiva */
+    div[data-testid="stRadio"] label:hover {
+        background-color: #e6a800 !important;
+    }
+    /* Nasconde l'eventuale testo del label radio (lo sostituiamo con il testo della scelta) */
+    div[data-testid="stRadio"] > label {
+        display: none !important;
+    }
+
     /* DROPDOWN MENU */
     div[data-baseweb="select"] {
         border: 2px solid #0B1D45 !important;
         background-color: #0B1D45 !important;
     }
     div[data-baseweb="select"] div { color: #FBBD00 !important; }
-
-    /* Nasconde bottoni Streamlit nativi usati per il trigger */
-    [data-testid="stSidebar"] .stButton { display: none !important; }
 
     /* BOTTONE DOWNLOAD */
     .stDownloadButton button {
@@ -124,10 +161,6 @@ def load_data():
 
 df = load_data()
 
-# Session state
-if 'usa_codice' not in st.session_state:
-    st.session_state.usa_codice = False
-
 # --- SIDEBAR ---
 with st.sidebar:
 
@@ -153,64 +186,19 @@ with st.sidebar:
         unsafe_allow_html=True
     )
 
-    # Stili pill: ATTIVO = blu pieno + testo giallo | INATTIVO = bordo blu + sfondo giallo + testo blu
-    def pill_style(active: bool) -> str:
-        if active:
-            return (
-                "background-color:#0B1D45; color:#FBBD00; "
-                "border:2px solid #0B1D45; "
-                "font-weight:900; font-size:0.85rem; letter-spacing:0.08em; "
-                "padding:8px 24px; border-radius:999px; cursor:pointer;"
-            )
-        else:
-            return (
-                "background-color:#FBBD00; color:#0B1D45; "
-                "border:2px solid #0B1D45; "
-                "font-weight:900; font-size:0.85rem; letter-spacing:0.08em; "
-                "padding:8px 24px; border-radius:999px; cursor:pointer;"
-            )
-
-    nome_style   = pill_style(not st.session_state.usa_codice)
-    codice_style = pill_style(st.session_state.usa_codice)
-
-    # I pill buttons triggherano i bottoni Streamlit nascosti tramite indice
-    st.markdown(f"""
-        <div style="display:flex; gap:12px; margin-bottom:12px;">
-            <button style="{nome_style}"
-                onclick="(function(){{
-                    var btns = window.parent.document.querySelectorAll('[data-testid=stSidebar] button');
-                    for(var i=0;i<btns.length;i++){{
-                        if(btns[i].innerText.trim()==='N'){btns[i].click(); break;}
-                    }}
-                }})()">
-                NOME
-            </button>
-            <button style="{codice_style}"
-                onclick="(function(){{
-                    var btns = window.parent.document.querySelectorAll('[data-testid=stSidebar] button');
-                    for(var i=0;i<btns.length;i++){{
-                        if(btns[i].innerText.trim()==='C'){btns[i].click(); break;}
-                    }}
-                }})()">
-                CODICE
-            </button>
-        </div>
-    """, unsafe_allow_html=True)
-
-    # Bottoni Streamlit nascosti (testo a lettera singola per trovabilità)
-    col1, col2 = st.columns(2)
-    with col1:
-        if st.button("N", key="btn_nome"):
-            st.session_state.usa_codice = False
-            st.rerun()
-    with col2:
-        if st.button("C", key="btn_codice"):
-            st.session_state.usa_codice = True
-            st.rerun()
+    # st.radio mascherato da pill buttons via CSS
+    modalita = st.radio(
+        "Modalità ricerca",
+        options=["NOME", "CODICE"],
+        index=0,
+        horizontal=True,
+        label_visibility="collapsed"
+    )
+    usa_codice = (modalita == "CODICE")
 
     df_rep = df[df['Sales Representative'] == sales_rep]
 
-    if st.session_state.usa_codice:
+    if usa_codice:
         codici_lista = sorted(df_rep['Codice Cliente'].unique())
         cliente_codice = st.selectbox("Seleziona Codice Cliente", codici_lista)
         cliente_nome = df_rep[df_rep['Codice Cliente'] == cliente_codice]['Nome Cliente'].iloc[0]
