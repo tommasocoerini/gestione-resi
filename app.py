@@ -5,67 +5,31 @@ import io
 # 1. CONFIGURAZIONE PAGINA
 st.set_page_config(page_title="TEP - Program 2026", layout="wide", page_icon="📊")
 
-# LINK DIRETTI AI TUOI LOGO SU GITHUB
-LOGO_MAIN = "https://github.com/tommasocoerini/tep/blob/main/logo.png?raw=true"
+LOGO_MAIN    = "https://github.com/tommasocoerini/tep/blob/main/logo.png?raw=true"
 LOGO_SIDEBAR = "https://github.com/tommasocoerini/tep/blob/main/logo2.png?raw=true"
 
-# 2. CSS - POSIZIONAMENTO ASSOLUTO PER IL LOGO
+# Logo nativo Streamlit: appare in cima alla sidebar (e opzionalmente nell'header)
+st.logo(LOGO_SIDEBAR, link=None)
+
+# 2. CSS
 st.markdown("""
     <style>
     .main { background-color: #0B1D45 !important; }
-    
-    /* TRUCCO PER PORTARE IL LOGO IN CIMA ALLA SIDEBAR */
-    [data-testid="stSidebarUserContent"] {
-        padding-top: 0px !important;
-        margin-top: 0px !important;
-    }
 
-    .sidebar-logo-container {
-        position: absolute;
-        top: -60px; /* Spinge il logo oltre il limite superiore */
-        left: 0;
-        right: 0;
-        text-align: center;
-        padding: 0 10px;
-        z-index: 100;
-    }
-
-    .sidebar-logo {
-        width: 100%;
-        max-width: 260px;
-        height: auto;
-    }
-
-    /* CREA SPAZIO PER I TESTI SOTTO IL LOGO POSIZIONATO IN ALTO */
-    .sidebar-content-wrapper {
-        margin-top: 100px; /* Regola questo valore per distanziare i menu dal logo */
-    }
-
-    /* HEADER PRINCIPALE */
-    .header-container {
-        display: flex;
-        align-items: center;
-        gap: 20px;
-        padding-bottom: 20px;
-    }
-    .logo-img { width: 80px; height: auto; }
-    
-    .main-title { 
-        color: #FBBD00 !important; 
-        font-weight: bold !important; 
-        font-size: 2.5rem !important;
-        margin: 0 !important;
-    }
-    .sub-title {
-        color: #FFFFFF !important;
-        font-size: 1.1rem !important;
-        margin: 0 !important;
-        opacity: 0.8;
-    }
-
-    /* SIDEBAR COLORI E TESTI */
+    /* SIDEBAR */
     [data-testid="stSidebar"] { background-color: #FBBD00 !important; }
-    
+
+    /* Logo nativo: forza sfondo trasparente e dimensione generosa */
+    [data-testid="stSidebar"] [data-testid="stLogo"] {
+        background-color: transparent !important;
+        padding: 12px 16px !important;
+    }
+    [data-testid="stSidebar"] [data-testid="stLogo"] img {
+        max-width: 200px !important;
+        width: 100% !important;
+        height: auto !important;
+    }
+
     .sidebar-section-title {
         color: #0B1D45 !important;
         font-weight: 800 !important;
@@ -81,6 +45,21 @@ st.markdown("""
         background-color: #0B1D45 !important;
     }
     div[data-baseweb="select"] div { color: #FBBD00 !important; }
+
+    /* HEADER PRINCIPALE */
+    .header-container {
+        display: flex; align-items: center;
+        gap: 20px; padding-bottom: 20px;
+    }
+    .logo-img { width: 80px; height: auto; }
+    .main-title {
+        color: #FBBD00 !important; font-weight: bold !important;
+        font-size: 2.5rem !important; margin: 0 !important;
+    }
+    .sub-title {
+        color: #FFFFFF !important; font-size: 1.1rem !important;
+        margin: 0 !important; opacity: 0.8;
+    }
 
     /* TABELLA HTML */
     .tep-table {
@@ -112,7 +91,7 @@ st.markdown("""
     </style>
 """, unsafe_allow_html=True)
 
-# 3. FUNZIONI DATI E EXCEL (Invariate)
+# 3. DATI E EXCEL
 @st.cache_data
 def load_data():
     data = {
@@ -150,27 +129,19 @@ df_all = load_data()
 
 # --- SIDEBAR ---
 with st.sidebar:
-    # Logo Sidebar in contenitore assoluto
-    st.markdown('<div class="sidebar-logo-container"><img src="{}" class="sidebar-logo"></div>'.format(LOGO_SIDEBAR), unsafe_allow_html=True)
-    
-    # Wrapper per creare spazio sotto il logo assoluto
-    st.markdown('<div class="sidebar-content-wrapper">', unsafe_allow_html=True)
-    
     st.markdown('<span class="sidebar-section-title">Seleziona Sales Representative</span>', unsafe_allow_html=True)
     sales_reps = sorted(df_all['Sales Representative'].unique())
     sales_rep = st.selectbox("Seleziona Sales Representative", sales_reps, label_visibility="collapsed")
-    
+
     st.markdown("---")
-    
+
     st.markdown('<span class="sidebar-section-title">Seleziona Cliente</span>', unsafe_allow_html=True)
     df_rep = df_all[df_all['Sales Representative'] == sales_rep]
     nomi_lista = sorted(df_rep['Nome Cliente'].unique())
     cliente_nome = st.selectbox("Seleziona Cliente", nomi_lista, label_visibility="collapsed")
-    
+
     cliente_codice = df_rep[df_rep['Nome Cliente'] == cliente_nome]['Codice Cliente'].iloc[0]
     df_display = df_rep[df_rep['Codice Cliente'] == cliente_codice].copy()
-    
-    st.markdown('</div>', unsafe_allow_html=True) # Chiude sidebar-content-wrapper
 
 # --- CONTENUTO PRINCIPALE ---
 st.markdown("""
@@ -193,11 +164,19 @@ if not df_display.empty:
         qty_cell = '<span style="color:#8899BB;">0</span>' if qty_rest == 0 else str(int(qty_rest))
         rows.append(f"<tr><td>{row['Size & Type']}</td><td>{int(row['Quantità Iniziale'])}</td><td>{qty_cell}</td></tr>")
     rows_html = "".join(rows)
-    table_html = f'<div style="overflow-x:auto;"><table class="tep-table"><thead><tr><th>Pneumatico</th><th>Qtà Iniziale</th><th>Qtà Restituibile</th></tr></thead><tbody>{rows_html}</tbody></table></div>'
+    table_html = (
+        f'<div style="overflow-x:auto;"><table class="tep-table">'
+        f'<thead><tr><th>Pneumatico</th><th>Qtà Iniziale</th><th>Qtà Restituibile</th></tr></thead>'
+        f'<tbody>{rows_html}</tbody></table></div>'
+    )
     st.markdown(table_html, unsafe_allow_html=True)
-    
+
     st.markdown("---")
-    
     excel_file = to_excel(df_view, cliente_codice, cliente_nome)
-    nome_file_download = f"Restituzione_TEP_{cliente_codice}_{cliente_nome.replace(' ', '_')}.xlsx"
-    st.download_button(label="📥 SCARICA MODULO DI RESO", data=excel_file, file_name=nome_file_download, mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
+    nome_file = f"Restituzione_TEP_{cliente_codice}_{cliente_nome.replace(' ', '_')}.xlsx"
+    st.download_button(
+        label="📥 SCARICA MODULO DI RESO",
+        data=excel_file,
+        file_name=nome_file,
+        mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+    )
