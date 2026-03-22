@@ -2,14 +2,29 @@ import streamlit as st
 import pandas as pd
 import io
 
-# 1. CONFIGURAZIONE PAGINA
-st.set_page_config(page_title="TEP - Tire Exchange Program", layout="wide", page_icon="🛞")
+# 1. CONFIGURAZIONE PAGINA (Uso icona standard per massima compatibilità)
+st.set_page_config(page_title="TEP - Program 2026", layout="wide", page_icon="📊")
 
-# 2. CSS PERSONALIZZATO (Stile Claude + Tabelle)
+# 2. CSS PERSONALIZZATO (Stile Claude + Tabelle + Responsive Fix)
 st.markdown("""
     <style>
     .main { background-color: #0B1D45 !important; }
-    h1 { color: #FBBD00 !important; font-weight: bold; }
+    
+    /* TITOLO PRINCIPALE */
+    .main-title { 
+        color: #FBBD00 !important; 
+        font-weight: bold !important; 
+        font-size: 2.5rem !important;
+        margin-bottom: 0px !important;
+    }
+    .sub-title {
+        color: #FFFFFF !important;
+        font-size: 1.1rem !important;
+        margin-top: 0px !important;
+        margin-bottom: 20px !important;
+    }
+
+    /* SIDEBAR */
     [data-testid="stSidebar"] { background-color: #FBBD00 !important; }
     [data-testid="stSidebar"] label, [data-testid="stSidebar"] p {
         color: #0B1D45 !important;
@@ -20,18 +35,29 @@ st.markdown("""
         gap: 10px; margin-bottom: 8px; margin-top: 4px;
     }
     .sidebar-label-text { color: #0B1D45; font-weight: 900; font-size: 1rem; }
+
+    /* DROPDOWN */
     div[data-baseweb="select"] {
         border: 2px solid #0B1D45 !important;
         background-color: #0B1D45 !important;
     }
     div[data-baseweb="select"] div { color: #FBBD00 !important; }
+
+    /* DOWNLOAD BUTTON */
     .stDownloadButton button {
         background-color: #FBBD00 !important;
         color: #0B1D45 !important;
         border: 2px solid #0B1D45 !important;
         font-weight: bold; width: 100%;
-        padding: 12px; border-radius: 8px;
+        padding: 15px; border-radius: 8px;
+        text-transform: uppercase;
     }
+    .stDownloadButton button:hover {
+        background-color: #FFFFFF !important;
+        color: #0B1D45 !important;
+    }
+
+    /* TABELLA HTML TEP */
     .tep-table {
         width: 100%; border-collapse: separate; border-spacing: 0;
         border-radius: 12px; overflow: hidden;
@@ -68,7 +94,7 @@ st.markdown("""
 def to_excel(df, codice, ragione_sociale):
     output = io.BytesIO()
     with pd.ExcelWriter(output, engine='xlsxwriter') as writer:
-        # startrow=3 e header=False per evitare la doppia riga di titoli alla riga 4
+        # Scriviamo i dati dalla riga 4, senza intestazione automatica
         df.to_excel(writer, index=False, sheet_name='Reso_TEP', startrow=3, header=False)
         
         workbook  = writer.book
@@ -79,27 +105,26 @@ def to_excel(df, codice, ragione_sociale):
         fmt_header = workbook.add_format({'bold': True, 'bg_color': '#D3D3D3', 'border': 1, 'align': 'center'})
         fmt_normal = workbook.add_format({'border': 1})
         
-        # Intestazioni fisse (Righe 1 e 2)
+        # Intestazioni fisse
         worksheet.write('A1', 'CODICE CLIENTE', fmt_grigio_bold)
-        worksheet.write('B1', codice, fmt_normal) # B1 Normale
+        worksheet.write('B1', codice, fmt_normal)
         
         worksheet.write('A2', 'RAGIONE SOCIALE', fmt_grigio_bold)
-        worksheet.write('B2', ragione_sociale, fmt_normal) # B2 Normale (come richiesto)
+        worksheet.write('B2', ragione_sociale, fmt_normal)
 
-        # Formattazione riga 3 (Manuale, per avere controllo totale)
+        # Formattazione riga 3 (Titoli colonne)
         for col_num, value in enumerate(df.columns.values):
             worksheet.write(2, col_num, value, fmt_header)
 
         # Auto-adattamento colonne
         for i, col in enumerate(df.columns):
-            # Calcolo larghezza basato sui dati o sul titolo
             max_val = df[col].astype(str).map(len).max() if not df.empty else 0
             max_len = max(max_val, len(col)) + 5
             worksheet.set_column(i, i, max_len)
 
     return output.getvalue()
 
-# 4. DATI DI TEST
+# 4. DATI DI TEST (In attesa dei file Excel reali)
 @st.cache_data
 def load_data():
     data = {
@@ -130,15 +155,16 @@ with st.sidebar:
     cliente_codice = df_rep[df_rep['Nome Cliente'] == cliente_nome]['Codice Cliente'].iloc[0]
     df_display = df_rep[df_rep['Codice Cliente'] == cliente_codice].copy()
 
-# --- MAIN CONTENT ---
-st.title("🛞 TEP: Tire Exchange Program")
-st.subheader(f"Riepilogo pneumatici restituibili: {cliente_nome}")
-st.write(f"**Codice:** {cliente_codice} | **Sales Rep:** {sales_rep}")
+# --- CONTENUTO PRINCIPALE ---
+st.markdown('<h1 class="main-title">TEP: Tire Exchange Program</h1>', unsafe_allow_html=True)
+st.markdown('<p class="sub-title">Gestione Resi Stagionali 2026</p>', unsafe_allow_html=True)
+
+st.write(f"**Cliente:** {cliente_nome} ({cliente_codice}) | **Sales Rep:** {sales_rep}")
 
 if not df_display.empty:
     df_view = df_display[['Size & Type', 'Quantità Iniziale', 'Quantità restituibile']].copy()
 
-    # Tabella HTML (Visione App)
+    # Tabella HTML (Responsive)
     rows = []
     for _, row in df_view.iterrows():
         qty_rest = row['Quantità restituibile']
@@ -146,15 +172,13 @@ if not df_display.empty:
         rows.append(f"<tr><td>{row['Size & Type']}</td><td>{int(row['Quantità Iniziale'])}</td><td>{qty_cell}</td></tr>")
 
     rows_html = "".join(rows)
-    table_html = f'<table class="tep-table"><thead><tr><th>Pneumatico</th><th>Qtà Iniziale</th><th>Qtà Restituibile</th></tr></thead><tbody>{rows_html}</tbody></table>'
+    table_html = f'<div style="overflow-x:auto;"><table class="tep-table"><thead><tr><th>Pneumatico</th><th>Qtà Iniziale</th><th>Qtà Restituibile</th></tr></thead><tbody>{rows_html}</tbody></table></div>'
     st.markdown(table_html, unsafe_allow_html=True)
     
     st.markdown("---")
     
-    # Download Excel con Nomenclatura Dinamica
+    # Download Excel con Nome File dinamico
     excel_file = to_excel(df_view, cliente_codice, cliente_nome)
-    
-    # Generazione nome file pulito (senza spazi eccessivi o caratteri strani)
     nome_file_download = f"Restituzione_TEP_{cliente_codice}_{cliente_nome.replace(' ', '_')}.xlsx"
     
     st.download_button(
