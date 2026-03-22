@@ -7,10 +7,6 @@ st.set_page_config(page_title="TEP - Program 2026", layout="wide", page_icon="�
 LOGO_MAIN    = "https://github.com/tommasocoerini/tep/blob/main/logo.png?raw=true"
 LOGO_SIDEBAR = "https://github.com/tommasocoerini/tep/blob/main/logo2.png?raw=true"
 
-# st.logo() con immagine reale — serve solo per "occupare" lo slot header
-# Il CSS poi sovrascrive le dimensioni
-st.logo(LOGO_SIDEBAR, link=None)
-
 st.markdown(f"""
     <style>
     .main {{ background-color: #0B1D45 !important; }}
@@ -25,8 +21,8 @@ st.markdown(f"""
         background-repeat: no-repeat !important;
         background-size: contain !important;
         background-position: left center !important;
-        min-height: 80px !important;
-        padding: 12px 16px !important;
+        min-height: 60px !important;
+        padding: 8px 16px !important;
     }}
 
     /* Nasconde l'img nativa di st.logo() — la sostituiamo con il background */
