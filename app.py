@@ -4,40 +4,52 @@ import pandas as pd
 # 1. CONFIGURAZIONE PAGINA
 st.set_page_config(page_title="TEP - Tire Exchange Program", layout="wide", page_icon="🛞")
 
-# 2. BLOCCO CSS PERSONALIZZATO (RIPRISTINO E FIX COLORI)
+# 2. BLOCCO CSS DEFINITIVO (FIX CONTRASTO E VISIBILITÀ)
 st.markdown("""
     <style>
+    /* Sfondo Blu Notte */
     .main { background-color: #0B1D45 !important; }
+    
+    /* Titolo Giallo */
     h1 { color: #FBBD00 !important; font-weight: bold; }
     
-    /* Box Benvenuto */
+    /* Box Benvenuto: Sfondo Giallo, Testo Blu */
     .stAlert { background-color: #FBBD00 !important; border: 2px solid #FBBD00; }
     .stAlert p { color: #0B1D45 !important; font-weight: bold; }
 
-    /* SIDEBAR */
+    /* SIDEBAR GIALLA */
     [data-testid="stSidebar"] { background-color: #FBBD00 !important; }
-    [data-testid="stSidebar"] label { color: #0B1D45 !important; font-weight: bold; font-size: 1.1rem; }
+    
+    /* Forza TUTTI i testi della sidebar (label, radio, scritte) in Blu Scuro */
+    [data-testid="stSidebar"] .stText, 
+    [data-testid="stSidebar"] label, 
+    [data-testid="stSidebar"] p,
+    [data-testid="stSidebar"] .stMarkdown { 
+        color: #0B1D45 !important; 
+        font-weight: bold !important; 
+    }
 
-    /* DROPDOWN MENU (I selettori) */
+    /* Testo dei pulsanti Radio (Cerca per...) in Blu */
+    [data-testid="stWidgetLabel"] p { color: #0B1D45 !important; }
+    div[data-testid="stMarkdownContainer"] p { color: #0B1D45 !important; }
+
+    /* MENU A TENDINA (Dropdown) */
     div[data-baseweb="select"] { 
         border: 2px solid #0B1D45 !important; 
         border-radius: 8px !important; 
-        background-color: #0B1D45 !important; /* Sfondo Blu scuro dentro il menu */
+        background-color: #0B1D45 !important; /* Sfondo Blu scuro del box */
     }
     
-    /* TESTO DENTRO IL MENU (Quello che non si leggeva) */
+    /* Testo selezionato dentro il Dropdown: Giallo su fondo Blu */
     div[data-baseweb="select"] div { 
-        color: #FBBD00 !important; /* Testo GIALLO su fondo blu */
+        color: #FBBD00 !important; 
     }
 
-    /* TABELLE */
+    /* TABELLA: Sfondo Bianco, Testo Blu */
     .stDataFrame, [data-testid="stTable"] { 
         background-color: #FFFFFF !important; 
         border-radius: 10px; 
-        padding: 10px;
     }
-    
-    /* Forza testo nero/blu nella tabella per leggibilità */
     [data-testid="stTable"] td, [data-testid="stDataFrame"] td, [data-testid="stDataFrame"] th { 
         color: #0B1D45 !important; 
     }
@@ -49,7 +61,6 @@ st.markdown("""
         border: 2px solid #0B1D45 !important; 
         font-weight: bold; 
         width: 100%;
-        margin-top: 20px;
     }
     .stDownloadButton button:hover { 
         background-color: #FFFFFF !important; 
@@ -58,7 +69,7 @@ st.markdown("""
     </style>
     """, unsafe_allow_html=True)
 
-# 3. DATI DI ESEMPIO (Assicuriamoci che siano popolati)
+# 3. DATI DI TEST (Popolamento)
 @st.cache_data
 def load_data():
     data = {
@@ -76,48 +87,21 @@ df = load_data()
 st.title("🛞 TEP: Tire Exchange Program")
 st.info("Benvenuto nel portale TEP. Seleziona il cliente per codice o ragione sociale.")
 
-# SIDEBAR - SALES REP
+# SIDEBAR
+st.sidebar.subheader("👤 Sales Representative")
 sales_reps = sorted(df['Sales Representative'].unique())
-sales_rep = st.sidebar.selectbox("👤 Sales Representative", sales_reps)
+sales_rep = st.sidebar.selectbox("Scegli il tuo nome", sales_reps, label_visibility="collapsed")
 
-# Filtro immediato per il Sales Rep scelto
 df_rep = df[df['Sales Representative'] == sales_rep]
 
 st.sidebar.markdown("---")
 st.sidebar.subheader("🔍 Ricerca Cliente")
 
-# Liste per i menu
 nomi_lista = sorted(df_rep['Nome Cliente'].unique())
 codici_lista = sorted(df_rep['Codice Cliente'].unique())
 
-# LOGICA SEMPLIFICATA DI SELEZIONE (senza session_state complesso che bloccava tutto)
-scelta_tipo = st.sidebar.radio("Cerca per:", ["Ragione Sociale", "Codice Cliente"], horizontal=True)
+# Selettore tipo ricerca
+scelta_tipo = st.sidebar.radio("Cerca per:", ["Ragione Sociale", "Codice Cliente"])
 
 if scelta_tipo == "Ragione Sociale":
-    cliente_nome = st.sidebar.selectbox("Seleziona Nome", nomi_lista)
-    # Troviamo il codice corrispondente
-    cliente_codice = df_rep[df_rep['Nome Cliente'] == cliente_nome]['Codice Cliente'].iloc[0]
-else:
-    cliente_codice = st.sidebar.selectbox("Seleziona Codice", codici_lista)
-    # Troviamo il nome corrispondente
-    cliente_nome = df_rep[df_rep['Codice Cliente'] == cliente_codice]['Nome Cliente'].iloc[0]
-
-# FILTRO FINALE DEI DATI
-df_display = df_rep[df_rep['Codice Cliente'] == cliente_codice]
-
-# --- VISUALIZZAZIONE ---
-st.subheader(f"Dati per: {cliente_nome} (Cod: {cliente_codice})")
-
-if not df_display.empty:
-    st.dataframe(df_display[['SKU', 'Qta_Iniziale']], use_container_width=True)
-    
-    st.markdown("---")
-    csv = df_display.to_csv(index=False).encode('utf-8')
-    st.download_button(
-        label=f"📥 Scarica Modulo Reso per {cliente_nome}",
-        data=csv,
-        file_name=f"TEP_{cliente_codice}.csv",
-        mime='text/csv'
-    )
-else:
-    st.warning("Nessun dato trovato per questo cliente.")
+    cliente_nome = st.sidebar.selectbox("
