@@ -17,48 +17,18 @@ st.markdown("""
         font-weight: bold !important;
     }
 
-    /* Etichette icona sidebar */
+    /* Etichette sidebar */
     .sidebar-label {
         display: flex;
         align-items: center;
-        gap: 8px;
-        margin-bottom: 6px;
+        gap: 10px;
+        margin-bottom: 8px;
         margin-top: 4px;
     }
     .sidebar-label-text {
         color: #0B1D45;
         font-weight: 900;
         font-size: 1rem;
-    }
-
-    /* PILL BUTTONS NOME / CODICE */
-    .pill-row {
-        display: flex;
-        gap: 10px;
-        margin-bottom: 10px;
-        margin-top: 4px;
-    }
-    .pill-btn {
-        background-color: #0B1D45;
-        color: #FBBD00;
-        font-weight: 900;
-        font-size: 0.82rem;
-        letter-spacing: 0.08em;
-        padding: 6px 20px;
-        border-radius: 999px;
-        border: none;
-        cursor: pointer;
-        transition: all 0.15s ease;
-        text-decoration: none;
-    }
-    .pill-btn:hover {
-        background-color: #1a3070;
-        color: #FBBD00;
-    }
-    .pill-btn.active {
-        background-color: white;
-        color: #0B1D45;
-        box-shadow: 0 2px 8px rgba(0,0,0,0.18);
     }
 
     /* DROPDOWN MENU */
@@ -68,8 +38,8 @@ st.markdown("""
     }
     div[data-baseweb="select"] div { color: #FBBD00 !important; }
 
-    /* Nasconde i bottoni Streamlit nativi usati solo per il trigger */
-    .hidden-btn { display: none !important; }
+    /* Nasconde bottoni Streamlit nativi usati per il trigger */
+    [data-testid="stSidebar"] .stButton { display: none !important; }
 
     /* BOTTONE DOWNLOAD */
     .stDownloadButton button {
@@ -164,7 +134,7 @@ with st.sidebar:
     # -- Sales Rep --
     st.markdown(
         '<div class="sidebar-label">'
-        '<span style="font-size:1.3rem;">👤</span>'
+        '<span style="font-size:1.4rem;">👤</span>'
         '<span class="sidebar-label-text">Seleziona Sales Representative</span>'
         '</div>',
         unsafe_allow_html=True
@@ -177,46 +147,66 @@ with st.sidebar:
     # -- Ricerca Cliente --
     st.markdown(
         '<div class="sidebar-label">'
-        '<span style="font-size:1.3rem;">🔍</span>'
+        '<span style="font-size:1.4rem;">🔍</span>'
         '<span class="sidebar-label-text">Seleziona Cliente</span>'
         '</div>',
         unsafe_allow_html=True
     )
 
-    # Pill buttons HTML — cliccano i bottoni Streamlit nascosti sotto
-    nome_active  = "active" if not st.session_state.usa_codice else ""
-    codice_active = "active" if st.session_state.usa_codice else ""
+    # Stili pill: ATTIVO = blu pieno + testo giallo | INATTIVO = bordo blu + sfondo giallo + testo blu
+    def pill_style(active: bool) -> str:
+        if active:
+            return (
+                "background-color:#0B1D45; color:#FBBD00; "
+                "border:2px solid #0B1D45; "
+                "font-weight:900; font-size:0.85rem; letter-spacing:0.08em; "
+                "padding:8px 24px; border-radius:999px; cursor:pointer;"
+            )
+        else:
+            return (
+                "background-color:#FBBD00; color:#0B1D45; "
+                "border:2px solid #0B1D45; "
+                "font-weight:900; font-size:0.85rem; letter-spacing:0.08em; "
+                "padding:8px 24px; border-radius:999px; cursor:pointer;"
+            )
 
+    nome_style   = pill_style(not st.session_state.usa_codice)
+    codice_style = pill_style(st.session_state.usa_codice)
+
+    # I pill buttons triggherano i bottoni Streamlit nascosti tramite indice
     st.markdown(f"""
-        <div class="pill-row">
-            <button class="pill-btn {nome_active}"
-                onclick="window.parent.document.querySelectorAll('[data-testid=stSidebar] button')[1].click()">
+        <div style="display:flex; gap:12px; margin-bottom:12px;">
+            <button style="{nome_style}"
+                onclick="(function(){{
+                    var btns = window.parent.document.querySelectorAll('[data-testid=stSidebar] button');
+                    for(var i=0;i<btns.length;i++){{
+                        if(btns[i].innerText.trim()==='N'){btns[i].click(); break;}
+                    }}
+                }})()">
                 NOME
             </button>
-            <button class="pill-btn {codice_active}"
-                onclick="window.parent.document.querySelectorAll('[data-testid=stSidebar] button')[2].click()">
+            <button style="{codice_style}"
+                onclick="(function(){{
+                    var btns = window.parent.document.querySelectorAll('[data-testid=stSidebar] button');
+                    for(var i=0;i<btns.length;i++){{
+                        if(btns[i].innerText.trim()==='C'){btns[i].click(); break;}
+                    }}
+                }})()">
                 CODICE
             </button>
         </div>
     """, unsafe_allow_html=True)
 
-    # Bottoni Streamlit nascosti che gestiscono lo state
+    # Bottoni Streamlit nascosti (testo a lettera singola per trovabilità)
     col1, col2 = st.columns(2)
     with col1:
-        if st.button("_NOME_", key="btn_nome"):
+        if st.button("N", key="btn_nome"):
             st.session_state.usa_codice = False
             st.rerun()
     with col2:
-        if st.button("_CODICE_", key="btn_codice"):
+        if st.button("C", key="btn_codice"):
             st.session_state.usa_codice = True
             st.rerun()
-
-    # Nasconde i bottoni nativi con CSS mirato ai loro testi
-    st.markdown("""
-        <style>
-        [data-testid="stSidebar"] .stButton { display: none !important; }
-        </style>
-    """, unsafe_allow_html=True)
 
     df_rep = df[df['Sales Representative'] == sales_rep]
 
