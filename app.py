@@ -31,7 +31,12 @@ st.markdown(f"""
 
     /* Nasconde l'img nativa di st.logo() — la sostituiamo con il background */
     [data-testid="stLogo"] {{
-        display: none !important;
+        visibility: hidden !important;
+        opacity: 0 !important;
+        width: 0 !important;
+        height: 0 !important;
+        position: absolute !important;
+        pointer-events: none !important;
     }}
 
     .sidebar-section-title {{
