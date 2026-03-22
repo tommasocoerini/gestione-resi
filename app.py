@@ -17,29 +17,48 @@ st.markdown("""
         font-weight: bold !important;
     }
 
-    /* BOTTONI NOME / CODICE - stato base (non attivo) */
-    div[data-testid="stSidebar"] .stButton button {
-        background-color: #0B1D45 !important;
-        color: #FBBD00 !important;
-        border: 2px solid #0B1D45 !important;
-        font-weight: 900 !important;
-        font-size: 0.85rem !important;
-        letter-spacing: 0.08em !important;
-        border-radius: 20px !important;
-        padding: 4px 18px !important;
-        width: 100% !important;
-        transition: all 0.15s ease !important;
+    /* Etichette icona sidebar */
+    .sidebar-label {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        margin-bottom: 6px;
+        margin-top: 4px;
     }
-    div[data-testid="stSidebar"] .stButton button:hover {
-        background-color: #1a3070 !important;
-        color: #FBBD00 !important;
+    .sidebar-label-text {
+        color: #0B1D45;
+        font-weight: 900;
+        font-size: 1rem;
     }
 
-    /* BOTTONE ATTIVO: bianco con testo blu */
-    div[data-testid="stSidebar"] .stButton button[kind="primary"] {
-        background-color: white !important;
-        color: #0B1D45 !important;
-        border: 2px solid #0B1D45 !important;
+    /* PILL BUTTONS NOME / CODICE */
+    .pill-row {
+        display: flex;
+        gap: 10px;
+        margin-bottom: 10px;
+        margin-top: 4px;
+    }
+    .pill-btn {
+        background-color: #0B1D45;
+        color: #FBBD00;
+        font-weight: 900;
+        font-size: 0.82rem;
+        letter-spacing: 0.08em;
+        padding: 6px 20px;
+        border-radius: 999px;
+        border: none;
+        cursor: pointer;
+        transition: all 0.15s ease;
+        text-decoration: none;
+    }
+    .pill-btn:hover {
+        background-color: #1a3070;
+        color: #FBBD00;
+    }
+    .pill-btn.active {
+        background-color: white;
+        color: #0B1D45;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.18);
     }
 
     /* DROPDOWN MENU */
@@ -48,6 +67,9 @@ st.markdown("""
         background-color: #0B1D45 !important;
     }
     div[data-baseweb="select"] div { color: #FBBD00 !important; }
+
+    /* Nasconde i bottoni Streamlit nativi usati solo per il trigger */
+    .hidden-btn { display: none !important; }
 
     /* BOTTONE DOWNLOAD */
     .stDownloadButton button {
@@ -132,29 +154,69 @@ def load_data():
 
 df = load_data()
 
-# Session state per la modalità di ricerca (default: per Nome)
+# Session state
 if 'usa_codice' not in st.session_state:
     st.session_state.usa_codice = False
 
 # --- SIDEBAR ---
 with st.sidebar:
-    st.subheader("👤 Sales Representative")
+
+    # -- Sales Rep --
+    st.markdown(
+        '<div class="sidebar-label">'
+        '<span style="font-size:1.3rem;">👤</span>'
+        '<span class="sidebar-label-text">Seleziona Sales Representative</span>'
+        '</div>',
+        unsafe_allow_html=True
+    )
     sales_reps = sorted(df['Sales Representative'].unique())
     sales_rep = st.selectbox("Scegli Sales Rep", sales_reps, label_visibility="collapsed")
 
     st.markdown("---")
-    st.subheader("🔍 Ricerca Cliente")
 
-    # Due bottoni affiancati: NOME e CODICE
+    # -- Ricerca Cliente --
+    st.markdown(
+        '<div class="sidebar-label">'
+        '<span style="font-size:1.3rem;">🔍</span>'
+        '<span class="sidebar-label-text">Seleziona Cliente</span>'
+        '</div>',
+        unsafe_allow_html=True
+    )
+
+    # Pill buttons HTML — cliccano i bottoni Streamlit nascosti sotto
+    nome_active  = "active" if not st.session_state.usa_codice else ""
+    codice_active = "active" if st.session_state.usa_codice else ""
+
+    st.markdown(f"""
+        <div class="pill-row">
+            <button class="pill-btn {nome_active}"
+                onclick="window.parent.document.querySelectorAll('[data-testid=stSidebar] button')[1].click()">
+                NOME
+            </button>
+            <button class="pill-btn {codice_active}"
+                onclick="window.parent.document.querySelectorAll('[data-testid=stSidebar] button')[2].click()">
+                CODICE
+            </button>
+        </div>
+    """, unsafe_allow_html=True)
+
+    # Bottoni Streamlit nascosti che gestiscono lo state
     col1, col2 = st.columns(2)
     with col1:
-        if st.button("NOME", type="primary" if not st.session_state.usa_codice else "secondary"):
+        if st.button("_NOME_", key="btn_nome"):
             st.session_state.usa_codice = False
             st.rerun()
     with col2:
-        if st.button("CODICE", type="primary" if st.session_state.usa_codice else "secondary"):
+        if st.button("_CODICE_", key="btn_codice"):
             st.session_state.usa_codice = True
             st.rerun()
+
+    # Nasconde i bottoni nativi con CSS mirato ai loro testi
+    st.markdown("""
+        <style>
+        [data-testid="stSidebar"] .stButton { display: none !important; }
+        </style>
+    """, unsafe_allow_html=True)
 
     df_rep = df[df['Sales Representative'] == sales_rep]
 
