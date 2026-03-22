@@ -8,7 +8,7 @@ st.set_page_config(page_title="TEP - Program 2026", layout="wide", page_icon="�
 # LINK DIRETTI AI TUOI ASSET SU GITHUB
 LOGO_MAIN    = "https://github.com/tommasocoerini/tep/blob/main/logo.png?raw=true"
 LOGO_SIDEBAR = "https://github.com/tommasocoerini/tep/blob/main/logo2.png?raw=true"
-# Link RAW per leggere il file Excel dei Sales Rep
+# Link RAW del file Excel
 SALES_REPS_URL = "https://github.com/tommasocoerini/tep/raw/1e81323d556f23bdbc49863f47faa8d26d4c0696/sales_reps.xlsx"
 
 # ATTIVAZIONE LOGO SIDEBAR
@@ -102,23 +102,31 @@ st.markdown(f"""
 @st.cache_data
 def load_sales_reps():
     try:
-        # Legge i Sales Rep dal tuo Excel su GitHub
+        # Legge i Sales Rep dal tuo Excel
         df_reps = pd.read_excel(SALES_REPS_URL)
+        # Pulizia nomi colonne
         df_reps.columns = df_reps.columns.str.strip()
-        return df_reps
+        
+        # FIX PER IL KEYERROR: Se 'Sales Representative' non esiste, usa la prima colonna trovata
+        col_name = 'Sales Representative'
+        if col_name not in df_reps.columns:
+            col_name = df_reps.columns[0]
+            
+        return df_reps, col_name
     except Exception as e:
         st.error(f"Errore caricamento database agenti: {e}")
-        return pd.DataFrame({'Sales Representative': ['Mario Rossi', 'Luigi Bianchi']})
+        # Fallback in caso di errore totale
+        return pd.DataFrame({'Sales Representative': ['Mario Rossi', 'Luigi Bianchi']}), 'Sales Representative'
 
 @st.cache_data
-def load_mock_data(reps_list):
-    """Genera dati temporanei finché non avremo i file clienti reali"""
+def load_mock_data(reps_list, col_name):
+    """Genera dati demo basati sulla lista agenti reale"""
     data = []
     for i, rep in enumerate(reps_list):
         data.append({
-            'Sales Representative': rep,
+            col_name: rep,
             'Codice Cliente': f'ABC{100+i}',
-            'Nome Cliente': f'Cliente Demo {i+1}',
+            'Nome Cliente': f'Cliente Demo di {rep}',
             'Size & Type': '205/55 R16 Summer',
             'Quantità Iniziale': 24,
             'Quantità restituibile': 12
@@ -147,9 +155,9 @@ def to_excel(df, codice, ragione_sociale):
     return output.getvalue()
 
 # --- CARICAMENTO DATI ---
-df_reps_db = load_sales_reps()
-lista_nomi_reps = sorted(df_reps_db['Sales Representative'].unique())
-df_all = load_mock_data(lista_nomi_reps)
+df_reps_db, AGENT_COL = load_sales_reps()
+lista_nomi_reps = sorted(df_reps_db[AGENT_COL].dropna().unique())
+df_all = load_mock_data(lista_nomi_reps, AGENT_COL)
 
 # --- SIDEBAR ---
 with st.sidebar:
@@ -159,7 +167,7 @@ with st.sidebar:
     st.markdown("---")
 
     st.markdown('<span class="sidebar-section-title">Seleziona Cliente</span>', unsafe_allow_html=True)
-    df_rep_filtered = df_all[df_all['Sales Representative'] == sales_rep]
+    df_rep_filtered = df_all[df_all[AGENT_COL] == sales_rep]
     nomi_clienti = sorted(df_rep_filtered['Nome Cliente'].unique())
     cliente_nome = st.selectbox("Seleziona Cliente", nomi_clienti, label_visibility="collapsed")
 
