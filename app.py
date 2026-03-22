@@ -168,36 +168,24 @@ if not df_display.empty:
     df_view = df_display[['Size & Type', 'Quantità Iniziale', 'Quantità restituibile']].copy()
 
     # Costruzione tabella HTML custom
-    rows_html = ""
+    rows = []
     for _, row in df_view.iterrows():
         qty_rest = row['Quantità restituibile']
-        if qty_rest == 0:
-            qty_cell = f'<span class="badge-zero">0</span>'
-        else:
-            qty_cell = str(int(qty_rest))
+        qty_cell = '<span class="badge-zero">0</span>' if qty_rest == 0 else str(int(qty_rest))
+        rows.append(f"<tr><td>{row['Size & Type']}</td><td>{int(row['Quantità Iniziale'])}</td><td>{qty_cell}</td></tr>")
 
-        rows_html += f"""
-        <tr>
-            <td>{row['Size & Type']}</td>
-            <td>{int(row['Quantità Iniziale'])}</td>
-            <td>{qty_cell}</td>
-        </tr>
-        """
+    rows_html = "".join(rows)
 
-    table_html = f"""
-    <table class="tep-table">
-        <thead>
-            <tr>
-                <th>Pneumatico</th>
-                <th>Qtà Iniziale</th>
-                <th>Qtà Restituibile</th>
-            </tr>
-        </thead>
-        <tbody>
-            {rows_html}
-        </tbody>
-    </table>
-    """
+    table_html = (
+        '<table class="tep-table">'
+        "<thead><tr>"
+        "<th>Pneumatico</th>"
+        "<th>Qtà Iniziale</th>"
+        "<th>Qtà Restituibile</th>"
+        "</tr></thead>"
+        f"<tbody>{rows_html}</tbody>"
+        "</table>"
+    )
 
     st.markdown(table_html, unsafe_allow_html=True)
 
