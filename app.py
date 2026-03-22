@@ -11,10 +11,10 @@ LOGO_SIDEBAR = "https://github.com/tommasocoerini/tep/blob/main/logo2.png?raw=tr
 # Link RAW del file Excel
 SALES_REPS_URL = "https://github.com/tommasocoerini/tep/raw/1e81323d556f23bdbc49863f47faa8d26d4c0696/sales_reps.xlsx"
 
-# ATTIVAZIONE LOGO SIDEBAR
+# ATTIVAZIONE LOGO SIDEBAR (Necessaria per creare il contenitore header)
 st.logo(LOGO_SIDEBAR)
 
-# 2. CSS COMPLETO
+# 2. CSS COMPLETO (Sistemato per eliminare sovrapposizioni)
 st.markdown(f"""
     <style>
     .main {{ background-color: #0B1D45 !important; }}
@@ -22,7 +22,7 @@ st.markdown(f"""
     /* SIDEBAR */
     [data-testid="stSidebar"] {{ background-color: #FBBD00 !important; }}
 
-    /* HEADER SIDEBAR (LOGO) */
+    /* HEADER SIDEBAR: Usiamo solo questo come contenitore del logo */
     [data-testid="stSidebarHeader"] {{
         background-color: #FBBD00 !important;
         background-image: url('{LOGO_SIDEBAR}') !important;
@@ -32,13 +32,16 @@ st.markdown(f"""
         min-height: 120px !important;
         margin-top: -30px !important;
         padding: 0 !important;
+        border: none !important;
     }}
 
-    [data-testid="stLogo"] {{
-        visibility: hidden !important;
+    /* NASCONDE IL LOGO NATIVO CHE SI SOVRAPPONE */
+    [data-testid="stLogo"], [data-testid="stSidebarHeader"] img {{
         display: none !important;
+        visibility: hidden !important;
     }}
 
+    /* Stile titoli sezioni Sidebar */
     .sidebar-section-title {{
         color: #0B1D45 !important;
         font-weight: 800 !important;
@@ -48,6 +51,7 @@ st.markdown(f"""
         display: block;
     }}
 
+    /* Dropdown della sidebar */
     div[data-baseweb="select"] {{
         border: 2px solid #0B1D45 !important;
         background-color: #0B1D45 !important;
@@ -87,6 +91,7 @@ st.markdown(f"""
     .tep-table tbody td:first-child {{ text-align: left; padding-left: 20px; }}
     .tep-table tbody td:last-child {{ color: #FBBD00 !important; font-weight: 800; font-size: 1.1rem; }}
 
+    /* PULSANTE DOWNLOAD */
     .stDownloadButton button {{
         background-color: #FBBD00 !important;
         color: #0B1D45 !important;
@@ -102,25 +107,18 @@ st.markdown(f"""
 @st.cache_data
 def load_sales_reps():
     try:
-        # Legge i Sales Rep dal tuo Excel
         df_reps = pd.read_excel(SALES_REPS_URL)
-        # Pulizia nomi colonne
         df_reps.columns = df_reps.columns.str.strip()
-        
-        # FIX PER IL KEYERROR: Se 'Sales Representative' non esiste, usa la prima colonna trovata
         col_name = 'Sales Representative'
         if col_name not in df_reps.columns:
             col_name = df_reps.columns[0]
-            
         return df_reps, col_name
     except Exception as e:
         st.error(f"Errore caricamento database agenti: {e}")
-        # Fallback in caso di errore totale
         return pd.DataFrame({'Sales Representative': ['Mario Rossi', 'Luigi Bianchi']}), 'Sales Representative'
 
 @st.cache_data
 def load_mock_data(reps_list, col_name):
-    """Genera dati demo basati sulla lista agenti reale"""
     data = []
     for i, rep in enumerate(reps_list):
         data.append({
