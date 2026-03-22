@@ -49,7 +49,7 @@ st.markdown("""
 
     /* Testo dentro il menu selezionato */
     div[data-baseweb="select"] > div {
-        color: #0B1D45 !important; 
+        color: #FBBD00 !important; 
     }
 
     /* Effetto Hover sul menu */
