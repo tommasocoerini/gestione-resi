@@ -4,7 +4,7 @@ import pandas as pd
 # 1. CONFIGURAZIONE PAGINA
 st.set_page_config(page_title="TEP - Tire Exchange Program", layout="wide", page_icon="🛞")
 
-# 2. CSS AGGIORNATO
+# 2. CSS
 st.markdown("""
     <style>
     .main { background-color: #0B1D45 !important; }
@@ -17,21 +17,18 @@ st.markdown("""
         font-weight: bold !important;
     }
 
-    /* --- FIX CHECKBOX ---
-       Forza il segno di spunta e il bordo a blu scuro,
-       così sono visibili sullo sfondo giallo della sidebar */
-    div[data-testid="stCheckbox"] svg {
-        color: #0B1D45 !important;
-        fill: #0B1D45 !important;
-        stroke: #0B1D45 !important;
-    }
-    div[data-testid="stCheckbox"] div[data-baseweb="checkbox"] > div {
-        border-color: #0B1D45 !important;
-        background-color: transparent !important;
-    }
-    div[data-testid="stCheckbox"] div[aria-checked="true"] > div {
+    /* --- TOGGLE: blu scuro su sfondo giallo --- */
+    div[data-testid="stToggle"] div[data-baseweb="checkbox"] div[role="switch"] {
         background-color: #0B1D45 !important;
-        border-color: #0B1D45 !important;
+        border: 2px solid #0B1D45 !important;
+    }
+    div[data-testid="stToggle"] div[data-baseweb="checkbox"] div[role="switch"] div {
+        background-color: #FBBD00 !important;
+    }
+    div[data-testid="stToggle"] label {
+        color: #0B1D45 !important;
+        font-weight: 900 !important;
+        font-size: 0.95rem !important;
     }
 
     /* DROPDOWN MENU */
@@ -49,6 +46,37 @@ st.markdown("""
         font-weight: bold; width: 100%;
     }
 
+    /* --- BADGE NOME / CODICE sopra il toggle --- */
+    .toggle-label {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        margin-bottom: 6px;
+    }
+    .badge-nome {
+        background-color: #0B1D45;
+        color: #FBBD00;
+        font-weight: 900;
+        font-size: 0.78rem;
+        padding: 3px 10px;
+        border-radius: 20px;
+        letter-spacing: 0.05em;
+    }
+    .badge-codice {
+        background-color: #0B1D45;
+        color: #FBBD00;
+        font-weight: 900;
+        font-size: 0.78rem;
+        padding: 3px 10px;
+        border-radius: 20px;
+        letter-spacing: 0.05em;
+    }
+    .badge-arrow {
+        color: #0B1D45;
+        font-weight: 900;
+        font-size: 1rem;
+    }
+
     /* --- TABELLA CUSTOM --- */
     .tep-table {
         width: 100%;
@@ -60,9 +88,7 @@ st.markdown("""
         font-size: 0.95rem;
         box-shadow: 0 4px 24px rgba(0,0,0,0.4);
     }
-    .tep-table thead tr {
-        background-color: #FBBD00;
-    }
+    .tep-table thead tr { background-color: #FBBD00; }
     .tep-table thead th {
         color: #0B1D45 !important;
         font-weight: 800;
@@ -71,25 +97,19 @@ st.markdown("""
         padding: 12px 16px;
         text-align: center;
     }
-    /* Colonna pneumatico: allineata a sinistra, più larga */
     .tep-table thead th:first-child,
     .tep-table tbody td:first-child {
         text-align: left;
         padding-left: 20px;
         width: 55%;
     }
-    /* Colonne quantità: centrate, compatte */
     .tep-table thead th:not(:first-child),
     .tep-table tbody td:not(:first-child) {
         text-align: center;
         width: 22.5%;
     }
-    .tep-table tbody tr:nth-child(odd) {
-        background-color: #112259;
-    }
-    .tep-table tbody tr:nth-child(even) {
-        background-color: #0D1D48;
-    }
+    .tep-table tbody tr:nth-child(odd)  { background-color: #112259; }
+    .tep-table tbody tr:nth-child(even) { background-color: #0D1D48; }
     .tep-table tbody tr:hover {
         background-color: #1a3070;
         transition: background-color 0.2s ease;
@@ -100,13 +120,11 @@ st.markdown("""
         border-top: 1px solid rgba(255,255,255,0.07);
         vertical-align: middle;
     }
-    /* Colonna "Quantità restituibile": evidenziata in giallo */
     .tep-table tbody td:last-child {
         color: #FBBD00 !important;
         font-weight: 800;
         font-size: 1.05rem;
     }
-    /* Badge "0" in grigio per non restituibili */
     .badge-zero {
         display: inline-block;
         background-color: rgba(255,255,255,0.1);
@@ -143,7 +161,16 @@ with st.sidebar:
     st.markdown("---")
     st.subheader("🔍 Ricerca Cliente")
 
-    usa_codice = st.checkbox("Cerca per Codice Cliente")
+    # Badge NOME ↔ CODICE sopra il toggle per chiarezza visiva
+    st.markdown(
+        '<div class="toggle-label">'
+        '<span class="badge-nome">NOME</span>'
+        '<span class="badge-arrow">↔</span>'
+        '<span class="badge-codice">CODICE</span>'
+        '</div>',
+        unsafe_allow_html=True
+    )
+    usa_codice = st.toggle("Cerca per Codice Cliente")
 
     df_rep = df[df['Sales Representative'] == sales_rep]
 
@@ -167,7 +194,6 @@ df_display = df_rep[df_rep['Codice Cliente'] == cliente_codice].copy()
 if not df_display.empty:
     df_view = df_display[['Size & Type', 'Quantità Iniziale', 'Quantità restituibile']].copy()
 
-    # Costruzione tabella HTML custom
     rows = []
     for _, row in df_view.iterrows():
         qty_rest = row['Quantità restituibile']
@@ -175,13 +201,10 @@ if not df_display.empty:
         rows.append(f"<tr><td>{row['Size & Type']}</td><td>{int(row['Quantità Iniziale'])}</td><td>{qty_cell}</td></tr>")
 
     rows_html = "".join(rows)
-
     table_html = (
         '<table class="tep-table">'
         "<thead><tr>"
-        "<th>Pneumatico</th>"
-        "<th>Qtà Iniziale</th>"
-        "<th>Qtà Restituibile</th>"
+        "<th>Pneumatico</th><th>Qtà Iniziale</th><th>Qtà Restituibile</th>"
         "</tr></thead>"
         f"<tbody>{rows_html}</tbody>"
         "</table>"
@@ -191,4 +214,4 @@ if not df_display.empty:
 
     st.markdown("---")
     csv = df_view.to_csv(index=False).encode('utf-8')
-    st.download_button(label=f"📥 SCARICA MODULO RESO TEP", data=csv, file_name=f"TEP_{cliente_codice}.csv")
+    st.download_button(label="📥 SCARICA MODULO RESO TEP", data=csv, file_name=f"TEP_{cliente_codice}.csv")
