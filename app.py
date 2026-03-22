@@ -4,74 +4,88 @@ import pandas as pd
 # 1. CONFIGURAZIONE PAGINA
 st.set_page_config(page_title="TEP - Tire Exchange Program", layout="wide", page_icon="🛞")
 
-# 2. BLOCCO CSS PERSONALIZZATO (Il tuo "Centro Stile")
+# 2. BLOCCO CSS PERSONALIZZATO
 st.markdown("""
     <style>
     /* --- SFONDO E TESTI GENERALI --- */
     .main {
-        background-color: #0B1D45; /* Colore sfondo pagina principale */
+        background-color: #0B1D45; /* Sfondo Blu scuro */
     }
     
-    /* --- TITOLO PRINCIPALE (H1) --- */
+    /* --- TITOLO PRINCIPALE --- */
     h1 {
-        color: #FBBD00 !important; /* Blu scuro aziendale */
+        color: #FBBD00 !important; /* Giallo */
         font-weight: bold;
     }
 
-    /* --- BOX BENVENUTO (st.info) --- */
+    /* --- BOX BENVENUTO --- */
     .stAlert {
-        background-color: #FBBD00; /* Sfondo azzurrino */
-        border: 1px solid #FBBD00;
+        background-color: #FBBD00; 
+        border: 2px solid #FBBD00;
     }
     .stAlert p {
-        color: #0B1D45 !important; /* Colore testo dentro il box info */
+        color: #0B1D45 !important; 
         font-size: 1.1rem;
+        font-weight: 500;
     }
 
     /* --- BARRA LATERALE (SIDEBAR) --- */
     [data-testid="stSidebar"] {
-        background-color: #FBBD00; /* Sfondo barra laterale (es. Blu) */
+        background-color: #FBBD00; /* Sfondo Giallo */
     }
     
-    /* Titoli dei menu a tendina nella sidebar */
     [data-testid="stSidebar"] label {
-        color: #0B1D45 !important; /* Bianco per i titoli dei menu */
+        color: #0B1D45 !important; /* Testo Blu */
         font-weight: bold;
     }
 
-    /* Testo all'interno dei menu a tendina (le opzioni selezionate) */
-    .stSelectbox div[data-baseweb="select"] > div {
-        color: #0B1D45 !important; /* Colore testo dentro il menu (Blu) */
-        background-color: #FBBD00 !important; /* Sfondo bianco del menu */
+    /* --- FIX BORDI E VISIBILITÀ DROPDOWN --- */
+    /* Contenitore del menu a tendina */
+    div[data-baseweb="select"] {
+        border: 2px solid #0B1D45 !important; /* Bordo Blu scuro per staccare dal giallo */
+        border-radius: 8px !important;
+        background-color: #FBBD00 !important;
     }
 
-    /* --- TABELLE --- */
-    /* Colore del testo nelle tabelle/dataframe */
+    /* Testo dentro il menu selezionato */
+    div[data-baseweb="select"] > div {
+        color: #0B1D45 !important; 
+    }
+
+    /* Effetto Hover sul menu */
+    div[data-baseweb="select"]:hover {
+        border-color: #000000 !important; /* Diventa nero al passaggio del mouse */
+    }
+
+    /* --- TABELLE (Migliorata leggibilità) --- */
     .stDataFrame, [data-testid="stTable"] {
-        color: #FBBD00; 
         background-color: #FFFFFF;
+        border-radius: 10px;
+    }
+    
+    /* Forza il testo della tabella a Blu per leggerlo su fondo bianco */
+    [data-testid="stTable"] td, [data-testid="stDataFrame"] td {
+        color: #0B1D45 !important;
     }
 
     /* --- BOTTONE DOWNLOAD --- */
     .stDownloadButton button {
-        background-color: #FBBD00 !important; /* Rosso */
-        color: white !important; /* Testo Bianco */
+        background-color: #FBBD00 !important;
+        color: #0B1D45 !important;
+        border: 2px solid #0B1D45 !important;
         border-radius: 8px;
-        border: none;
         padding: 0.5rem 2rem;
         font-weight: bold;
+        transition: 0.3s;
     }
     .stDownloadButton button:hover {
-        background-color: #0B1D45 !important; /* Rosso più scuro al passaggio del mouse */
-        color: white !important;
+        background-color: #0B1D45 !important;
+        color: #FBBD00 !important;
     }
     </style>
     """, unsafe_allow_html=True)
 
-# 3. LOGO (Opzionale)
-# st.sidebar.image("link_al_tuo_logo.png")
-
-# --- DA QUI IN POI IL TUO CODICE LOGICO ---
+# --- LOGICA APPLICATIVA ---
 st.title("🛞 TEP: Tire Exchange Program")
 st.info("Benvenuto nel portale TEP. Seleziona l'agente e il cliente per calcolare lo stock restituibile.")
 
@@ -96,4 +110,5 @@ cliente = st.sidebar.selectbox("🏢 Seleziona Cliente", df[df['Agente']==agente
 st.subheader(f"Analisi per: {cliente}")
 st.dataframe(df[df['Cliente']==cliente], use_container_width=True)
 
+st.markdown("---")
 st.download_button("📥 Scarica Modulo Reso TEP", "dati finti", "reso.csv")
