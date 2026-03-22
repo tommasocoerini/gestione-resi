@@ -105,4 +105,10 @@ df_display = df_rep[df_rep['Codice Cliente'] == cliente_codice]
 
 # --- VISUALIZZAZIONE ---
 st.subheader(f"📋 Riepilogo Stock: {cliente_nome}")
-st.write(f"**ID Cliente:** {cliente_codice} |
+st.write(f"**ID Cliente:** {cliente_codice} | **Sales Rep:** {sales_rep}")
+
+if not df_display.empty:
+    st.dataframe(df_display[['SKU', 'Qta_Iniziale']], use_container_width=True)
+    st.markdown("---")
+    csv = df_display.to_csv(index=False).encode('utf-8')
+    st.download_button(label="📥 SCARICA MODULO RESO TEP", data=csv, file_name=f"TEP_{cliente_codice}.csv", mime='text/csv')
