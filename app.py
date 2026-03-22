@@ -4,111 +4,89 @@ import pandas as pd
 # 1. CONFIGURAZIONE PAGINA
 st.set_page_config(page_title="TEP - Tire Exchange Program", layout="wide", page_icon="🛞")
 
-# 2. BLOCCO CSS PERSONALIZZATO
+# 2. BLOCCO CSS PERSONALIZZATO (I TUOI COLORI ORIGINALI)
 st.markdown("""
     <style>
-    /* --- SFONDO E TESTI GENERALI --- */
-    .main {
-        background-color: #0B1D45; /* Sfondo Blu scuro */
-    }
+    /* Sfondo Blu Notte che avevi scelto */
+    .main { background-color: #0B1D45; }
     
-    /* --- TITOLO PRINCIPALE --- */
-    h1 {
-        color: #FBBD00 !important; /* Giallo */
-        font-weight: bold;
-    }
+    /* Titoli in Giallo */
+    h1 { color: #FBBD00 !important; font-weight: bold; }
 
-    /* --- BOX BENVENUTO --- */
-    .stAlert {
-        background-color: #FBBD00; 
-        border: 2px solid #FBBD00;
+    /* Box Info Giallo con testo Blu */
+    .stAlert { background-color: #FBBD00; border: 2px solid #FBBD00; }
+    .stAlert p { color: #0B1D45 !important; font-weight: 500; }
+
+    /* Sidebar Gialla con scritte Blu */
+    [data-testid="stSidebar"] { background-color: #FBBD00; }
+    [data-testid="stSidebar"] label { color: #0B1D45 !important; font-weight: bold; }
+
+    /* Bordi dei menu a tendina per vederli sul fondo giallo */
+    div[data-baseweb="select"] { 
+        border: 2px solid #0B1D45 !important; 
+        border-radius: 8px !important; 
+        background-color: #FBBD00 !important; 
     }
-    .stAlert p {
+    div[data-baseweb="select"] > div { color: #0B1D45 !important; }
+
+    /* Tabella bianca con testo blu per non affaticare la vista */
+    .stDataFrame, [data-testid="stTable"] { background-color: #FFFFFF; border-radius: 10px; }
+    [data-testid="stTable"] td, [data-testid="stDataFrame"] td { color: #0B1D45 !important; }
+
+    /* Bottone Download */
+    .stDownloadButton button { 
+        background-color: #FBBD00 !important; 
         color: #0B1D45 !important; 
-        font-size: 1.1rem;
-        font-weight: 500;
+        border: 2px solid #0B1D45 !important; 
+        font-weight: bold; 
+        width: 100%; 
     }
-
-    /* --- BARRA LATERALE (SIDEBAR) --- */
-    [data-testid="stSidebar"] {
-        background-color: #FBBD00; /* Sfondo Giallo */
-    }
-    
-    [data-testid="stSidebar"] label {
-        color: #0B1D45 !important; /* Testo Blu */
-        font-weight: bold;
-    }
-
-    /* --- FIX BORDI E VISIBILITÀ DROPDOWN --- */
-    /* Contenitore del menu a tendina */
-    div[data-baseweb="select"] {
-        border: 2px solid #0B1D45 !important; /* Bordo Blu scuro per staccare dal giallo */
-        border-radius: 8px !important;
-        background-color: #FBBD00 !important;
-    }
-
-    /* Testo dentro il menu selezionato */
-    div[data-baseweb="select"] > div {
-        color: #FBBD00 !important; 
-    }
-
-    /* Effetto Hover sul menu */
-    div[data-baseweb="select"]:hover {
-        border-color: #000000 !important; /* Diventa nero al passaggio del mouse */
-    }
-
-    /* --- TABELLE (Migliorata leggibilità) --- */
-    .stDataFrame, [data-testid="stTable"] {
-        background-color: #FFFFFF;
-        border-radius: 10px;
-    }
-    
-    /* Forza il testo della tabella a Blu per leggerlo su fondo bianco */
-    [data-testid="stTable"] td, [data-testid="stDataFrame"] td {
-        color: #0B1D45 !important;
-    }
-
-    /* --- BOTTONE DOWNLOAD --- */
-    .stDownloadButton button {
-        background-color: #FBBD00 !important;
-        color: #0B1D45 !important;
-        border: 2px solid #0B1D45 !important;
-        border-radius: 8px;
-        padding: 0.5rem 2rem;
-        font-weight: bold;
-        transition: 0.3s;
-    }
-    .stDownloadButton button:hover {
-        background-color: #0B1D45 !important;
-        color: #FBBD00 !important;
-    }
+    .stDownloadButton button:hover { background-color: #0B1D45 !important; color: #FBBD00 !important; }
     </style>
     """, unsafe_allow_html=True)
 
-# --- LOGICA APPLICATIVA ---
-st.title("🛞 TEP: Tire Exchange Program")
-st.info("Benvenuto nel portale TEP. Seleziona l'agente e il cliente per calcolare lo stock restituibile.")
-
-# Funzione dati (Esempio)
+# 3. CARICAMENTO DATI (Simulazione con i nuovi campi)
 @st.cache_data
 def load_data():
     data = {
-        'Agente': ['Mario Rossi', 'Luigi Bianchi'],
-        'Cliente': ['Gommista A', 'Gommista B'],
-        'SKU': ['PNEU-001', 'PNEU-002'],
-        'Qta_Iniziale': [10, 20]
+        'Sales Representative': ['Mario Rossi', 'Mario Rossi', 'Luigi Bianchi', 'Luigi Bianchi'],
+        'Codice Cliente': ['A105', 'B200', 'C001', 'A050'],
+        'Nome Cliente': ['Zeta Tyres', 'Alpha Gomme', 'Beta Ruote', 'Delta Service'],
+        'SKU': ['PNEU-001', 'PNEU-002', 'PNEU-003', 'PNEU-004'],
+        'Qta_Iniziale': [10, 20, 15, 30]
     }
     return pd.DataFrame(data)
 
 df = load_data()
 
-# Filtri
-agente = st.sidebar.selectbox("👤 Seleziona Agente", df['Agente'].unique())
-cliente = st.sidebar.selectbox("🏢 Seleziona Cliente", df[df['Agente']==agente]['Cliente'].unique())
+# --- LOGICA DI NAVIGAZIONE ---
+st.title("🛞 TEP: Tire Exchange Program")
+st.info("Benvenuto nel portale TEP. Seleziona il cliente per codice o ragione sociale.")
 
-# Visualizzazione
-st.subheader(f"Analisi per: {cliente}")
-st.dataframe(df[df['Cliente']==cliente], use_container_width=True)
+# A. Selezione Sales Representative (Ordinato A-Z)
+sales_reps = sorted(df['Sales Representative'].unique())
+sales_rep = st.sidebar.selectbox("👤 Sales Representative", sales_reps)
 
-st.markdown("---")
-st.download_button("📥 Scarica Modulo Reso TEP", "dati finti", "reso.csv")
+# Filtriamo i dati per il Sales Rep scelto
+df_rep = df[df['Sales Representative'] == sales_rep]
+
+# Liste ordinate per i menu
+nomi_ordinati = sorted(df_rep['Nome Cliente'].unique())
+codici_ordinati = sorted(df_rep['Codice Cliente'].unique())
+
+st.sidebar.markdown("---")
+st.sidebar.write("🔍 **Cerca Cliente**")
+
+# Sincronizzazione dei due menù
+if 'nome_sel' not in st.session_state:
+    st.session_state.nome_sel = nomi_ordinati[0]
+if 'codice_sel' not in st.session_state:
+    st.session_state.codice_sel = df_rep[df_rep['Nome Cliente'] == nomi_ordinati[0]]['Codice Cliente'].iloc[0]
+
+def on_name_change():
+    sel = st.session_state.nome_sel
+    st.session_state.codice_sel = df_rep[df_rep['Nome Cliente'] == sel]['Codice Cliente'].iloc[0]
+
+def on_code_change():
+    sel = st.session_state.codice_sel
+    st.session_state.nome_sel = df_rep[df_rep['Codice Cliente'] == sel]['Nome Cliente'].iloc
