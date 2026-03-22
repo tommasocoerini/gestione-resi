@@ -5,25 +5,33 @@ import io
 # 1. CONFIGURAZIONE PAGINA
 st.set_page_config(page_title="TEP - Program 2026", layout="wide", page_icon="📊")
 
-# LINK DIRETTO AL TUO LOGO SU GITHUB
-LOGO_URL = "https://github.com/tommasocoerini/tep/blob/main/logo.png?raw=true"
+# LINK DIRETTI AI TUOI LOGO SU GITHUB
+LOGO_MAIN = "https://github.com/tommasocoerini/tep/blob/main/logo.png?raw=true"
+LOGO_SIDEBAR = "https://github.com/tommasocoerini/tep/blob/main/logo2.png?raw=true"
 
-# 2. CSS AGGIORNATO (Senza f-string per evitare errori di sintassi)
+# 2. CSS (Pulito dai conflitti f-string)
 st.markdown("""
     <style>
     .main { background-color: #0B1D45 !important; }
     
-    /* LAYOUT HEADER */
+    /* LAYOUT HEADER PRINCIPALE */
     .header-container {
         display: flex;
         align-items: center;
         gap: 20px;
         padding-bottom: 20px;
     }
-    .logo-img {
-        width: 80px;
-        height: auto;
+    .logo-img { width: 80px; height: auto; }
+    
+    /* LOGO SIDEBAR */
+    .sidebar-logo {
+        width: 120px;
+        display: block;
+        margin-left: auto;
+        margin-right: auto;
+        margin-bottom: 20px;
     }
+
     .main-title { 
         color: #FBBD00 !important; 
         font-weight: bold !important; 
@@ -37,14 +45,14 @@ st.markdown("""
         opacity: 0.8;
     }
 
-    /* SIDEBAR - TESTI IN BLU SCURO */
+    /* SIDEBAR */
     [data-testid="stSidebar"] { background-color: #FBBD00 !important; }
     
     .sidebar-section-title {
         color: #0B1D45 !important;
         font-weight: 800 !important;
         font-size: 1.1rem !important;
-        margin-bottom: 5px !important;
+        margin-bottom: 8px !important;
         margin-top: 15px !important;
         display: block;
     }
@@ -128,6 +136,9 @@ df_all = load_data()
 
 # --- SIDEBAR ---
 with st.sidebar:
+    # Inserimento Logo Sidebar
+    st.markdown('<img src="{}" class="sidebar-logo">'.format(LOGO_SIDEBAR), unsafe_allow_html=True)
+    
     st.markdown('<span class="sidebar-section-title">Seleziona Sales Representative</span>', unsafe_allow_html=True)
     sales_reps = sorted(df_all['Sales Representative'].unique())
     sales_rep = st.selectbox("Seleziona Sales Representative", sales_reps, label_visibility="collapsed")
@@ -143,7 +154,6 @@ with st.sidebar:
     df_display = df_rep[df_rep['Codice Cliente'] == cliente_codice].copy()
 
 # --- CONTENUTO PRINCIPALE ---
-# Qui usiamo .format() per inserire il LOGO_URL senza rompere le graffe del CSS
 st.markdown("""
     <div class="header-container">
         <img src="{}" class="logo-img">
@@ -152,7 +162,7 @@ st.markdown("""
             <p class="sub-title">Gestione Resi Stagionali 2026</p>
         </div>
     </div>
-""".format(LOGO_URL), unsafe_allow_html=True)
+""".format(LOGO_MAIN), unsafe_allow_html=True)
 
 st.write(f"**Cliente:** {cliente_nome} ({cliente_codice}) | **Sales Rep:** {sales_rep}")
 
