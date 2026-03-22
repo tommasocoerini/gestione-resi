@@ -68,8 +68,8 @@ st.markdown("""
 def to_excel(df, codice, ragione_sociale):
     output = io.BytesIO()
     with pd.ExcelWriter(output, engine='xlsxwriter') as writer:
-        # Iniziamo a scrivere i dati dalla riga 4 (indice 3)
-        df.to_excel(writer, index=False, sheet_name='Reso_TEP', startrow=3)
+        # startrow=3 e header=False per evitare la doppia riga di titoli alla riga 4
+        df.to_excel(writer, index=False, sheet_name='Reso_TEP', startrow=3, header=False)
         
         workbook  = writer.book
         worksheet = writer.sheets['Reso_TEP']
@@ -77,26 +77,29 @@ def to_excel(df, codice, ragione_sociale):
         # Formati
         fmt_grigio_bold = workbook.add_format({'bold': True, 'bg_color': '#D3D3D3', 'border': 1})
         fmt_header = workbook.add_format({'bold': True, 'bg_color': '#D3D3D3', 'border': 1, 'align': 'center'})
+        fmt_normal = workbook.add_format({'border': 1})
         
-        # Intestazioni fisse
+        # Intestazioni fisse (Righe 1 e 2)
         worksheet.write('A1', 'CODICE CLIENTE', fmt_grigio_bold)
-        worksheet.write('B1', codice) # Codice (sfondo bianco)
+        worksheet.write('B1', codice, fmt_normal) # B1 Normale
         
         worksheet.write('A2', 'RAGIONE SOCIALE', fmt_grigio_bold)
-        worksheet.write('B2', ragione_sociale, fmt_grigio_bold) # Ragione sociale (sfondo grigio)
+        worksheet.write('B2', ragione_sociale, fmt_normal) # B2 Normale (come richiesto)
 
-        # Formattazione riga 3 (intestazioni tabella)
+        # Formattazione riga 3 (Manuale, per avere controllo totale)
         for col_num, value in enumerate(df.columns.values):
             worksheet.write(2, col_num, value, fmt_header)
 
         # Auto-adattamento colonne
         for i, col in enumerate(df.columns):
-            max_len = max(df[col].astype(str).map(len).max(), len(col)) + 5
+            # Calcolo larghezza basato sui dati o sul titolo
+            max_val = df[col].astype(str).map(len).max() if not df.empty else 0
+            max_len = max(max_val, len(col)) + 5
             worksheet.set_column(i, i, max_len)
 
     return output.getvalue()
 
-# 4. DATI DI TEST (Sostituiremo con Excel reali presto)
+# 4. DATI DI TEST
 @st.cache_data
 def load_data():
     data = {
@@ -124,7 +127,6 @@ with st.sidebar:
     nomi_lista = sorted(df_rep['Nome Cliente'].unique())
     cliente_nome = st.selectbox("Scegli Cliente", nomi_lista, label_visibility="collapsed")
     
-    # Definiamo cliente_codice e df_display qui dentro per sicurezza
     cliente_codice = df_rep[df_rep['Nome Cliente'] == cliente_nome]['Codice Cliente'].iloc[0]
     df_display = df_rep[df_rep['Codice Cliente'] == cliente_codice].copy()
 
@@ -149,11 +151,15 @@ if not df_display.empty:
     
     st.markdown("---")
     
-    # Download Excel
+    # Download Excel con Nomenclatura Dinamica
     excel_file = to_excel(df_view, cliente_codice, cliente_nome)
+    
+    # Generazione nome file pulito (senza spazi eccessivi o caratteri strani)
+    nome_file_download = f"Restituzione_TEP_{cliente_codice}_{cliente_nome.replace(' ', '_')}.xlsx"
+    
     st.download_button(
         label="📥 SCARICA MODULO DI RESO",
         data=excel_file,
-        file_name=f"Modulo_Reso_{cliente_codice}.xlsx",
+        file_name=nome_file_download,
         mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
     )
